@@ -56,6 +56,9 @@ export class ClaudeExtractor implements ReceiptExtractor {
       if (err instanceof Anthropic.RateLimitError || err instanceof Anthropic.InternalServerError || err instanceof Anthropic.APIConnectionError) {
         throw new ExtractionError(`Claude temporarily unavailable: ${err.message}`, true);
       }
+      if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
+        throw new ExtractionError(`Claude rejected the API key (${err.status}); check the Anthropic API key secret`, false, "auth");
+      }
       if (err instanceof Anthropic.APIError) {
         throw new ExtractionError(`Claude request failed (${err.status}): ${err.message}`, false);
       }

@@ -82,6 +82,15 @@ describe("processRecords", () => {
     expect(last).toMatchObject({ status: "failed", error: "bad doc" });
   });
 
+  it("drops cached credentials on an auth failure", async () => {
+    const bad: ReceiptExtractor = { provider: "f", extract: async () => { throw new ExtractionError("401", false, "auth"); } };
+    let reset = 0;
+    const res = await processRecords([sqsRecord({ type: "rescan", userId: USER, expenseId: "01EXP" })], { ...deps(bad), onAuthError: () => reset++ });
+    expect(res.batchItemFailures).toEqual([]);
+    expect(reset).toBe(1);
+    expect(ddb.commandCalls(PutCommand).at(-1)!.args[0].input.Item).toMatchObject({ status: "failed", error: "401" });
+  });
+
   it("reports retryable failures back to SQS", async () => {
     const flaky: ReceiptExtractor = { provider: "f", extract: async () => { throw new ExtractionError("429", true); } };
     const res = await processRecords([sqsRecord(s3Notification(`users/${USER}/01EXP/original.jpg`), "m9")], deps(flaky));

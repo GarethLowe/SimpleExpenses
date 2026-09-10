@@ -3,7 +3,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { MAX_UPLOAD_BYTES, parseReceiptObjectKey, type Expense } from "@simple-expenses/shared";
 import type { S3Event, SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
-import { ExtractionError, applyExtraction, createExtractor, type ReceiptExtractor } from "../extract/index.js";
+import { ExtractionError, applyExtraction, createExtractor, resetAnthropicKeyCache, type ReceiptExtractor } from "../extract/index.js";
 import { scanEnv } from "../lib/env.js";
 import { ExpensesRepo } from "../lib/repo.js";
 import type { ScanMessage } from "../lib/service.js";
@@ -20,7 +20,16 @@ let extractorPromise: Promise<ReceiptExtractor | null> | undefined;
 export const handler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
   extractorPromise ??= createExtractor(env);
   const extractor = await extractorPromise;
-  return processRecords(event.Records, { repo, storage, extractor });
+  return processRecords(event.Records, {
+    repo,
+    storage,
+    extractor,
+    onAuthError: () => {
+      // Rebuild the client on the next invocation so a newly set secret is picked up.
+      extractorPromise = undefined;
+      resetAnthropicKeyCache();
+    },
+  });
 };
 
 export interface ScanDeps {
@@ -28,6 +37,8 @@ export interface ScanDeps {
   storage: ReceiptStorage;
   extractor: ReceiptExtractor | null;
   now?: () => Date;
+  /** Called when the extractor reports bad credentials. */
+  onAuthError?: () => void;
 }
 
 export interface ScanTarget {
@@ -129,6 +140,7 @@ export async function scanOne(target: ScanTarget, deps: ScanDeps): Promise<Expen
       // Leave it in `scanning`; SQS will redeliver, then DLQ.
       throw err;
     }
+    if (err instanceof ExtractionError && err.kind === "auth") deps.onAuthError?.();
     const message = err instanceof Error ? err.message : String(err);
     return fail(message);
   }

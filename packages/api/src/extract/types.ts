@@ -13,10 +13,13 @@ export interface ReceiptExtractor {
   extract(input: ExtractInput): Promise<ExtractionMeta>;
 }
 
+export type ExtractionErrorKind = "auth" | "input" | "model" | "unavailable";
+
 export class ExtractionError extends Error {
   constructor(
     message: string,
     public readonly retryable: boolean,
+    public readonly kind: ExtractionErrorKind = retryable ? "unavailable" : "model",
   ) {
     super(message);
     this.name = "ExtractionError";

@@ -37,6 +37,11 @@ export async function createExtractor(env: ScanEnv): Promise<ReceiptExtractor | 
 
 let cachedKey: string | null = null;
 
+/** Forget the cached API key so the next scan re-reads the secret (e.g. after the user rotates it). */
+export function resetAnthropicKeyCache(): void {
+  cachedKey = null;
+}
+
 async function resolveAnthropicApiKey(env: ScanEnv): Promise<string> {
   if (cachedKey) return cachedKey;
   const fromEnv = process.env["ANTHROPIC_API_KEY"];
