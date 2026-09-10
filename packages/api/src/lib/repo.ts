@@ -75,16 +75,21 @@ export class ExpensesRepo {
   }
 
   async list(userId: string, q: ListExpensesQuery): Promise<ListResult> {
-    const names: Record<string, string> = { "#pk": "GSI1PK", "#sk": "GSI1SK" };
+    // DynamoDB rejects any declared name/value that the expressions don't use,
+    // so only add #sk when a date condition references it.
+    const names: Record<string, string> = { "#pk": "GSI1PK" };
     const values: Record<string, unknown> = { ":pk": userPk(userId) };
     let keyCond = "#pk = :pk";
     if (q.month) {
+      names["#sk"] = "GSI1SK";
       keyCond += " AND begins_with(#sk, :prefix)";
       values[":prefix"] = q.month;
     } else if (q.year) {
+      names["#sk"] = "GSI1SK";
       keyCond += " AND begins_with(#sk, :prefix)";
       values[":prefix"] = q.year;
     } else if (q.from || q.to) {
+      names["#sk"] = "GSI1SK";
       keyCond += " AND #sk BETWEEN :from AND :to";
       values[":from"] = q.from ?? "0000-00-00";
       values[":to"] = `${q.to ?? "9999-12-31"}#￿`;

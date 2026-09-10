@@ -107,6 +107,21 @@ describe("GET /expenses", () => {
     expect(input.FilterExpression).toBe("#archived = :archived AND #company = :company AND #project = :project");
   });
 
+  it("declares only the expression names and values it uses (DynamoDB rejects extras)", async () => {
+    ddb.on(QueryCommand).resolves({ Items: [] });
+    const cases: Record<string, string>[] = [{ status: "needs_review" }, {}, { year: "2024" }, { month: "2024-03", category: "Meals" }, { from: "2024-01-01", to: "2024-02-01", archived: "all" }];
+    for (const query of cases) {
+      ddb.reset();
+      ddb.on(QueryCommand).resolves({ Items: [] });
+      const res = await route(makeService(), event("GET /expenses", { query }));
+      expect(res).toMatchObject({ statusCode: 200 });
+      const input = ddb.commandCalls(QueryCommand)[0]!.args[0].input;
+      const expressions = [input.KeyConditionExpression, input.FilterExpression].filter(Boolean).join(" ");
+      for (const name of Object.keys(input.ExpressionAttributeNames)) expect(expressions, JSON.stringify(query)).toContain(name);
+      for (const value of Object.keys(input.ExpressionAttributeValues)) expect(expressions, JSON.stringify(query)).toContain(value);
+    }
+  });
+
   it("returns a cursor when the page is full", async () => {
     ddb.on(QueryCommand).resolves({ Items: [stored(expense({ id: "A" })), stored(expense({ id: "B" }))], LastEvaluatedKey: { PK: "x", SK: "y" } });
     const res = await route(makeService(), event("GET /expenses", { query: { limit: "2" } }));
