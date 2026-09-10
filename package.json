@@ -1,0 +1,27 @@
+{
+  "name": "simple-expenses",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Serverless personal expenses app on AWS: receipt capture, AI extraction, cataloguing and reporting.",
+  "workspaces": [
+    "packages/shared",
+    "packages/api",
+    "packages/infra",
+    "packages/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "synth": "npm run synth -w @simple-expenses/infra",
+    "deploy": "npm run deploy -w @simple-expenses/infra"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
