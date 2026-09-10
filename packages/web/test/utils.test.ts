@@ -6,7 +6,7 @@ function e(p: Partial<Expense>): Expense {
   return {
     id: "x", userId: "u", status: "ready", archived: false, date: "2024-03-05", month: "2024-03", year: "2024",
     merchant: "M", company: "C", project: null, category: "T", currency: "GBP", total: 1, subtotal: null, tax: null, paymentMethod: null,
-    receiptNumber: null, lineItems: [], notes: null, file: { key: "k", contentType: "image/jpeg", size: 1, originalFilename: "a.jpg" },
+    receiptNumber: null, lineItems: [], notes: null, file: { key: "k", contentType: "image/jpeg", size: 1, originalFilename: "a.jpg", thumbnailKey: null },
     extraction: null, error: null, createdAt: "", updatedAt: "", ...p,
   };
 }

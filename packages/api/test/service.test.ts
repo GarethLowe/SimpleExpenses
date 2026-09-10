@@ -62,8 +62,22 @@ describe("POST /expenses", () => {
     });
     expect(body.uploadUrl).toContain(`users/${USER}/NEWID/original.jpg`);
     expect(body.uploadHeaders).toEqual({ "Content-Type": "image/jpeg" });
+    expect(body.thumbnailUpload).toBeNull();
+    expect(body.expense.file.thumbnailKey).toBeNull();
     const put = ddb.commandCalls(PutCommand)[0]!.args[0].input;
     expect(put.Item).toMatchObject({ PK: `USER#${USER}`, SK: "EXP#NEWID", GSI1SK: "0000-00-00#NEWID" });
+  });
+
+  it("presigns a thumbnail upload when the client offers one", async () => {
+    ddb.on(PutCommand).resolves({});
+    const res = await route(
+      makeService(),
+      event("POST /expenses", { body: { filename: "r.pdf", contentType: "application/pdf", size: 100, thumbnail: true } }),
+    );
+    const body = JSON.parse((res as { body: string }).body);
+    expect(body.expense.file.thumbnailKey).toBe(`users/${USER}/NEWID/thumb.jpg`);
+    expect(body.thumbnailUpload.url).toContain(`users/${USER}/NEWID/thumb.jpg`);
+    expect(body.thumbnailUpload.headers).toEqual({ "Content-Type": "image/jpeg" });
   });
 
   it("rejects unsupported content types", async () => {
@@ -84,6 +98,7 @@ describe("GET /expenses", () => {
     const body = JSON.parse((res as { body: string }).body);
     expect(body.items).toHaveLength(1);
     expect(body.items[0]).not.toHaveProperty("PK");
+    expect(body.items[0].thumbnailUrl).toBeNull();
     expect(body.cursor).toBeNull();
     const input = ddb.commandCalls(QueryCommand)[0]!.args[0].input;
     expect(input.IndexName).toBe("GSI1");
@@ -145,14 +160,24 @@ describe("applyEdit", () => {
 });
 
 describe("DELETE /expenses/{id}", () => {
-  it("removes the S3 object and the row", async () => {
-    ddb.on(GetCommand, { Key: { PK: `USER#${USER}`, SK: "EXP#01EXP" } }).resolves({ Item: stored(expense()) });
+  it("removes the S3 objects (original and thumbnail) and the row", async () => {
+    const thumb = `users/${USER}/01EXP/thumb.jpg`;
+    ddb.on(GetCommand, { Key: { PK: `USER#${USER}`, SK: "EXP#01EXP" } }).resolves({ Item: stored(expense({ file: { ...expense().file, thumbnailKey: thumb } })) });
     ddb.on(DeleteCommand).resolves({});
     s3.on(DeleteObjectCommand).resolves({});
     const res = await route(makeService(), event("DELETE /expenses/{id}", { path: { id: "01EXP" } }));
     expect(res).toMatchObject({ statusCode: 204 });
-    expect(s3.commandCalls(DeleteObjectCommand)[0]!.args[0].input).toEqual({ Bucket: "bucket", Key: `users/${USER}/01EXP/original.jpg` });
+    const keys = s3.commandCalls(DeleteObjectCommand).map((c) => c.args[0].input["Key"]);
+    expect(keys).toEqual([`users/${USER}/01EXP/original.jpg`, thumb]);
     expect(ddb.commandCalls(DeleteCommand)).toHaveLength(1);
+  });
+
+  it("includes a presigned thumbnail URL on reads when one exists", async () => {
+    const thumb = `users/${USER}/01EXP/thumb.jpg`;
+    ddb.on(GetCommand, { Key: { PK: `USER#${USER}`, SK: "EXP#01EXP" } }).resolves({ Item: stored(expense({ file: { ...expense().file, thumbnailKey: thumb } })) });
+    const res = await route(makeService(), event("GET /expenses/{id}", { path: { id: "01EXP" } }));
+    const body = JSON.parse((res as { body: string }).body);
+    expect(body.thumbnailUrl).toContain(thumb);
   });
 });
 

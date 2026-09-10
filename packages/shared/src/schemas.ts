@@ -76,6 +76,8 @@ export const FileInfoSchema = z.object({
   contentType: z.enum(ALLOWED_CONTENT_TYPES),
   size: z.number().int().nonnegative(),
   originalFilename: z.string(),
+  /** Client-generated JPEG thumbnail, uploaded alongside the original. */
+  thumbnailKey: z.string().nullable().default(null),
 });
 export type FileInfo = z.infer<typeof FileInfoSchema>;
 
@@ -104,6 +106,8 @@ export const ExpenseSchema = z.object({
   error: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  /** Short-lived presigned URL for the thumbnail; set on API responses only, never stored. */
+  thumbnailUrl: z.string().nullable().optional(),
 });
 export type Expense = z.infer<typeof ExpenseSchema>;
 
@@ -133,16 +137,26 @@ export const CreateExpenseRequestSchema = z.object({
   filename: z.string().min(1).max(255),
   contentType: z.enum(ALLOWED_CONTENT_TYPES),
   size: z.number().int().positive().max(MAX_UPLOAD_BYTES),
+  /** Whether the client will also upload a JPEG thumbnail. */
+  thumbnail: z.boolean().default(false),
   company: z.string().max(100).nullable().optional(),
   project: z.string().max(100).nullable().optional(),
   category: z.string().max(100).nullable().optional(),
 });
 export type CreateExpenseRequest = z.infer<typeof CreateExpenseRequestSchema>;
 
+export const UploadTargetSchema = z.object({
+  url: z.string(),
+  headers: z.record(z.string(), z.string()),
+});
+export type UploadTarget = z.infer<typeof UploadTargetSchema>;
+
 export const CreateExpenseResponseSchema = z.object({
   expense: ExpenseSchema,
   uploadUrl: z.string(),
   uploadHeaders: z.record(z.string(), z.string()),
+  /** Present when the client said it would send a thumbnail. */
+  thumbnailUpload: UploadTargetSchema.nullable(),
 });
 export type CreateExpenseResponse = z.infer<typeof CreateExpenseResponseSchema>;
 

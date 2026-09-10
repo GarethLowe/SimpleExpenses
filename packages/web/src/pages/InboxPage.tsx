@@ -1,6 +1,6 @@
 import { formatMoney } from "@simple-expenses/shared";
 import { Link } from "react-router-dom";
-import { Empty, ErrorBox, Spinner, StatusPill } from "../components/common";
+import { Empty, ErrorBox, Spinner, StatusPill, Thumb } from "../components/common";
 import { useBulk, useInbox, useRescan } from "../hooks";
 import { shortDate } from "../utils";
 
@@ -54,6 +54,7 @@ export function InboxPage() {
             return (
               <li key={e.id} className="row review">
                 <Link to={`/expenses/${e.id}`} className="row-main">
+                  <Thumb expense={e} />
                   <div className="row-title">
                     <strong>{e.merchant ?? e.file.originalFilename}</strong>
                     <span className={`pill conf-${conf >= 0.8 ? "high" : conf >= 0.5 ? "mid" : "low"}`}>{Math.round(conf * 100)}%</span>

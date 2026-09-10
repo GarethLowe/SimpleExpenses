@@ -1,5 +1,6 @@
 import { MAX_UPLOAD_BYTES, type AllowedContentType, type Expense } from "@simple-expenses/shared";
 import type { ApiClient } from "./api";
+import { makeThumbnail } from "./thumbnail";
 
 /** Claude's per-image cap is 5 MB; we stay comfortably under it. */
 const TARGET_IMAGE_BYTES = 3 * 1024 * 1024;
@@ -84,18 +85,28 @@ export interface UploadOptions {
   onProgress?: (fraction: number) => void;
 }
 
-/** Create the record, then PUT the bytes to the presigned URL. */
+/** Create the record, then PUT the bytes (and a thumbnail, if one could be made) to the presigned URLs. */
 export async function uploadReceipt(api: ApiClient, file: File, opts: UploadOptions = {}): Promise<Expense> {
   const prepared = await prepareFile(file);
+  const thumbnail = await makeThumbnail(prepared.blob, prepared.contentType);
   const created = await api.createExpense({
     filename: prepared.filename,
     contentType: prepared.contentType,
     size: prepared.blob.size,
+    thumbnail: thumbnail !== null,
     company: opts.company ?? null,
     project: opts.project ?? null,
     category: opts.category ?? null,
   });
+  // Original first: its arrival is what triggers the scan.
   await putWithProgress(created.uploadUrl, created.uploadHeaders, prepared.blob, opts.onProgress);
+  if (thumbnail && created.thumbnailUpload) {
+    try {
+      await putWithProgress(created.thumbnailUpload.url, created.thumbnailUpload.headers, thumbnail);
+    } catch (err) {
+      console.warn("Thumbnail upload failed; continuing without it", err);
+    }
+  }
   return created.expense;
 }
 

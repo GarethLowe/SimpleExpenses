@@ -8,3 +8,4 @@ cdk.out/
 coverage/
 .DS_Store
 packages/web/dev-dist/
+packages/infra/outputs.json

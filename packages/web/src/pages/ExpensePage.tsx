@@ -2,6 +2,7 @@ import { formatMoney, type ExpenseEdit } from "@simple-expenses/shared";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Confirm, ErrorBox, Spinner, StatusPill } from "../components/common";
+import { ReceiptViewer } from "../components/ReceiptViewer";
 import { useDeleteExpense, useExpense, useFileUrl, useRescan, useSettings, useUpdateExpense } from "../hooks";
 
 type Form = {
@@ -29,6 +30,7 @@ export function ExpensePage() {
   const rescan = useRescan();
   const [form, setForm] = useState<Form | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(true);
 
   const e = expense.data;
   useEffect(() => {
@@ -80,7 +82,6 @@ export function ExpensePage() {
     update.mutate({ id, edit }, { onSuccess: () => setDirty(false) });
   }
 
-  const isPdf = e.file.contentType === "application/pdf";
   const busy = update.isPending || remove.isPending || rescan.isPending;
 
   return (
@@ -95,18 +96,11 @@ export function ExpensePage() {
       {e.status === "failed" && <p className="error">Extraction failed: {e.error}</p>}
 
       <div className="detail">
-        <div className="preview card">
-          {file.data ? (
-            isPdf ? (
-              <iframe title="Receipt" src={file.data.url} />
-            ) : (
-              <a href={file.data.url} target="_blank" rel="noreferrer">
-                <img src={file.data.url} alt="Receipt" />
-              </a>
-            )
-          ) : (
-            <Spinner label="Loading file…" />
-          )}
+        <div className={`preview card ${showReceipt ? "" : "collapsed"}`}>
+          <button type="button" className="link mobile-only preview-toggle" onClick={() => setShowReceipt((s) => !s)}>
+            {showReceipt ? "Hide receipt" : "Show receipt"}
+          </button>
+          {showReceipt && (file.data ? <ReceiptViewer url={file.data.url} contentType={file.data.contentType} filename={e.file.originalFilename} /> : <Spinner label="Loading file…" />)}
           <div className="muted small">
             {e.file.originalFilename} · {(e.file.size / 1024).toFixed(0)} KB
             {e.extraction && (

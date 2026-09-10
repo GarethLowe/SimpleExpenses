@@ -5,6 +5,7 @@ import {
   expenseSk,
   parseReceiptObjectKey,
   receiptObjectKey,
+  thumbnailObjectKey,
   userPk,
 } from "./keys.js";
 
@@ -30,7 +31,8 @@ describe("keys", () => {
   it("round-trips object keys", () => {
     const key = receiptObjectKey("user1", "exp1", "image/jpeg");
     expect(key).toBe("users/user1/exp1/original.jpg");
-    expect(parseReceiptObjectKey(key)).toEqual({ userId: "user1", expenseId: "exp1", filename: "original.jpg" });
+    expect(parseReceiptObjectKey(key)).toEqual({ userId: "user1", expenseId: "exp1", filename: "original.jpg", isOriginal: true });
+    expect(parseReceiptObjectKey(thumbnailObjectKey("user1", "exp1"))).toMatchObject({ filename: "thumb.jpg", isOriginal: false });
     expect(parseReceiptObjectKey("other/thing")).toBeNull();
     expect(parseReceiptObjectKey("users/a/b")).toBeNull();
     expect(() => receiptObjectKey("u", "e", "text/plain")).toThrow();

@@ -58,6 +58,7 @@ describe("targetsFromRecord", () => {
     expect(targetsFromRecord(sqsRecord(s3Notification(`users/${USER}/01EXP/original.jpg`)))).toEqual([{ userId: USER, expenseId: "01EXP" }]);
     expect(targetsFromRecord(sqsRecord(s3Notification("users/u%2B1/e/original.jpg")))).toEqual([{ userId: "u+1", expenseId: "e" }]);
     expect(targetsFromRecord(sqsRecord({ type: "rescan", userId: "u", expenseId: "e" }))).toEqual([{ userId: "u", expenseId: "e" }]);
+    expect(targetsFromRecord(sqsRecord(s3Notification(`users/${USER}/01EXP/thumb.jpg`)))).toEqual([]);
     expect(targetsFromRecord(sqsRecord({ Event: "s3:TestEvent" }))).toEqual([]);
     expect(targetsFromRecord(sqsRecord(s3Notification("somewhere/else")))).toEqual([]);
     expect(targetsFromRecord({ messageId: "x", body: "not json" } as SQSRecord)).toEqual([]);

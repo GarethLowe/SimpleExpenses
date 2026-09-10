@@ -54,8 +54,9 @@ export function targetsFromRecord(record: SQSRecord): ScanTarget[] {
     for (const rec of (body as S3Event).Records ?? []) {
       const key = decodeURIComponent((rec.s3?.object?.key ?? "").replace(/\+/g, " "));
       const parsed = parseReceiptObjectKey(key);
-      if (parsed) targets.push({ userId: parsed.userId, expenseId: parsed.expenseId });
-      else console.warn("Ignoring object with unexpected key", key);
+      if (parsed?.isOriginal) targets.push({ userId: parsed.userId, expenseId: parsed.expenseId });
+      else if (!parsed) console.warn("Ignoring object with unexpected key", key);
+      // thumbnails and other companions are silently ignored
     }
     return targets;
   }

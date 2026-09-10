@@ -86,6 +86,14 @@ describe("SimpleExpensesStack", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
       Environment: { Variables: Match.objectLike({ ALLOWED_EMAILS: "me@example.com" }) },
     });
+    template.hasResourceProperties("AWS::Cognito::UserPoolUser", {
+      Username: "me@example.com",
+      DesiredDeliveryMediums: ["EMAIL"],
+    });
+  });
+
+  it("creates no initial user without an allowlist", () => {
+    synth().resourceCountIs("AWS::Cognito::UserPoolUser", 0);
   });
 
   it("gives the scan worker the Anthropic secret by default and nothing else", () => {

@@ -4,8 +4,11 @@
  * Table:  PK = USER#<sub>      SK = EXP#<id>   (expense records)
  *         PK = USER#<sub>      SK = SETTINGS   (user settings)
  * GSI1:   GSI1PK = USER#<sub>  GSI1SK = <date|0000-00-00>#<id>  (date-ordered listing)
- * Bucket: users/<sub>/<id>/original.<ext>
+ * Bucket: users/<sub>/<id>/original.<ext>   (+ thumb.jpg, client-generated)
  */
+
+export const ORIGINAL_PREFIX = "original.";
+export const THUMBNAIL_FILENAME = "thumb.jpg";
 
 export const USER_PREFIX = "USER#";
 export const EXPENSE_PREFIX = "EXP#";
@@ -49,10 +52,18 @@ export function receiptObjectKey(userId: string, expenseId: string, contentType:
   return `users/${userId}/${expenseId}/original.${extensionFor(contentType)}`;
 }
 
+export function thumbnailObjectKey(userId: string, expenseId: string): string {
+  assertNoSeparator(userId, "userId");
+  assertNoSeparator(expenseId, "expenseId");
+  return `users/${userId}/${expenseId}/${THUMBNAIL_FILENAME}`;
+}
+
 export interface ParsedObjectKey {
   userId: string;
   expenseId: string;
   filename: string;
+  /** True for the receipt itself (original.*), false for thumbnails and anything else. */
+  isOriginal: boolean;
 }
 
 /** Parse `users/<sub>/<id>/<file>`; returns null for anything else. */
@@ -61,7 +72,7 @@ export function parseReceiptObjectKey(key: string): ParsedObjectKey | null {
   if (parts.length !== 4 || parts[0] !== "users") return null;
   const [, userId, expenseId, filename] = parts;
   if (!userId || !expenseId || !filename) return null;
-  return { userId, expenseId, filename };
+  return { userId, expenseId, filename, isOriginal: filename.startsWith(ORIGINAL_PREFIX) };
 }
 
 function assertNoSeparator(value: string, name: string): void {

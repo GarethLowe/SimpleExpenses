@@ -8,6 +8,7 @@ import {
   buildReport,
   monthOf,
   receiptObjectKey,
+  thumbnailObjectKey,
   yearOf,
   type BulkAction,
   type CreateExpenseRequest,
@@ -54,6 +55,7 @@ export class ExpensesService {
   async create(userId: string, req: CreateExpenseRequest): Promise<CreateExpenseResponse> {
     const id = this.newId();
     const key = receiptObjectKey(userId, id, req.contentType);
+    const thumbnailKey = req.thumbnail ? thumbnailObjectKey(userId, id) : null;
     const ts = this.now().toISOString();
     const settings = await this.deps.repo.getSettings(userId);
     const expense: Expense = {
@@ -76,7 +78,7 @@ export class ExpensesService {
       receiptNumber: null,
       lineItems: [],
       notes: null,
-      file: { key, contentType: req.contentType, size: req.size, originalFilename: req.filename },
+      file: { key, contentType: req.contentType, size: req.size, originalFilename: req.filename, thumbnailKey },
       extraction: null,
       error: null,
       createdAt: ts,
@@ -84,19 +86,21 @@ export class ExpensesService {
     };
     await this.deps.repo.put(expense);
     const upload = await this.deps.storage.presignUpload(key, req.contentType);
-    return { expense, uploadUrl: upload.url, uploadHeaders: upload.headers };
+    const thumbnailUpload = thumbnailKey ? await this.deps.storage.presignUpload(thumbnailKey, "image/jpeg") : null;
+    return { expense, uploadUrl: upload.url, uploadHeaders: upload.headers, thumbnailUpload };
   }
 
   async get(userId: string, id: string): Promise<Expense> {
     const e = await this.deps.repo.get(userId, id);
     if (!e) throw notFound("Expense not found");
-    return e;
+    return this.withThumbnail(e);
   }
 
   async list(userId: string, q: ListExpensesQuery): Promise<ListExpensesResponse> {
     if (q.month && q.year && !q.month.startsWith(q.year)) throw badRequest("month does not fall in year");
     try {
-      return await this.deps.repo.list(userId, q);
+      const page = await this.deps.repo.list(userId, q);
+      return { ...page, items: await Promise.all(page.items.map((e) => this.withThumbnail(e))) };
     } catch (err) {
       if ((err as Error).message === "Invalid cursor") throw badRequest("Invalid cursor");
       throw err;
@@ -104,34 +108,48 @@ export class ExpensesService {
   }
 
   async update(userId: string, id: string, edit: ExpenseEdit): Promise<Expense> {
-    const existing = await this.get(userId, id);
+    const existing = await this.deps.repo.get(userId, id);
+    if (!existing) throw notFound("Expense not found");
     const updated = applyEdit(existing, edit, this.now());
     await this.deps.repo.put(updated, { mustExist: true });
-    return updated;
+    return this.withThumbnail(updated);
   }
 
   async delete(userId: string, id: string): Promise<void> {
     const existing = await this.deps.repo.get(userId, id);
     if (!existing) return;
-    await this.deps.storage.delete(existing.file.key);
+    await this.deleteFiles(existing);
     await this.deps.repo.delete(userId, id);
   }
 
+  private async deleteFiles(e: Expense): Promise<void> {
+    await this.deps.storage.delete(e.file.key);
+    if (e.file.thumbnailKey) await this.deps.storage.delete(e.file.thumbnailKey);
+  }
+
+  /** Presigning is a local signature, no network call, so it is cheap enough per row. */
+  private async withThumbnail(e: Expense): Promise<Expense> {
+    if (!e.file.thumbnailKey) return { ...e, thumbnailUrl: null };
+    return { ...e, thumbnailUrl: await this.deps.storage.presignDownload(e.file.thumbnailKey, "thumb.jpg", 3600) };
+  }
+
   async fileUrl(userId: string, id: string): Promise<{ url: string; contentType: string }> {
-    const e = await this.get(userId, id);
+    const e = await this.deps.repo.get(userId, id);
+    if (!e) throw notFound("Expense not found");
     const url = await this.deps.storage.presignDownload(e.file.key, e.file.originalFilename);
     return { url, contentType: e.file.contentType };
   }
 
   async rescan(userId: string, id: string): Promise<Expense> {
-    const e = await this.get(userId, id);
+    const e = await this.deps.repo.get(userId, id);
+    if (!e) throw notFound("Expense not found");
     const head = await this.deps.storage.head(e.file.key);
     if (!head) throw badRequest("Receipt file has not been uploaded yet");
     const updated: Expense = { ...e, status: "scanning", error: null, updatedAt: this.now().toISOString() };
     await this.deps.repo.put(updated, { mustExist: true });
     const msg: ScanMessage = { type: "rescan", userId, expenseId: id };
     await this.deps.sqs.send(new SendMessageCommand({ QueueUrl: this.deps.scanQueueUrl, MessageBody: JSON.stringify(msg) }));
-    return updated;
+    return this.withThumbnail(updated);
   }
 
   async bulk(userId: string, req: BulkAction): Promise<{ updated: number; deleted: number; missing: string[] }> {
@@ -145,7 +163,7 @@ export class ExpensesService {
         continue;
       }
       if (req.action.type === "delete") {
-        await this.deps.storage.delete(e.file.key);
+        await this.deleteFiles(e);
         await this.deps.repo.delete(userId, id);
         deleted++;
         continue;

@@ -104,9 +104,10 @@ Pass with `-c key=value` on `deploy`/`synth`, or put them in
 | `appleSecretName` | *(off)* | Secret `{"clientId":"...","teamId":"...","keyId":"...","privateKey":"-----BEGIN PRIVATE KEY-----..."}`; enables "Sign in with Apple". |
 | `devOrigins` | `http://localhost:5173` | Extra origins allowed for OAuth callbacks and CORS (local dev). |
 
-Without Google/Apple secrets the hosted UI offers email + password; because
-self-sign-up is disabled you create that user in the Cognito console (or with
-`aws cognito-idp admin-create-user`). Federated users are created on first
+Without Google/Apple secrets the hosted UI offers email + password. The first
+address in `allowedEmails` is created as a user by the stack and receives a
+temporary password by email (Cognito's built-in sender, so check spam); further
+users can be added in the Cognito console. Federated users are created on first
 sign-in, subject to the allowlist.
 
 #### Google sign-in
@@ -159,7 +160,11 @@ with their own tests.
 - Failed extractions go to a DLQ after three attempts (`ScanDlqUrl` output);
   the record itself shows `failed` with a Retry button for non-retryable errors.
 - Uploads are capped at 20 MB; images are downscaled client-side to stay under
-  Claude's 5 MB image limit.
+  Claude's 5 MB image limit. A 400 px JPEG thumbnail is generated on the device
+  (pdf.js renders page 1 for PDFs) and uploaded alongside the original, so
+  lists show previews without any server-side image processing.
+- The receipt viewer renders PDFs with pdf.js and supports pinch/scroll zoom,
+  pan and rotate for images, so it behaves the same on iOS, Android and desktop.
 - Log groups are kept for 30 days.
 
 ## Limitations and ideas

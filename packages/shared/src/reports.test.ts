@@ -24,7 +24,7 @@ function exp(partial: Partial<Expense>): Expense {
     receiptNumber: null,
     lineItems: [],
     notes: null,
-    file: { key: "k", contentType: "image/jpeg", size: 1, originalFilename: "a.jpg" },
+    file: { key: "k", contentType: "image/jpeg", size: 1, originalFilename: "a.jpg", thumbnailKey: null },
     extraction: null,
     error: null,
     createdAt: "2024-01-01T00:00:00Z",

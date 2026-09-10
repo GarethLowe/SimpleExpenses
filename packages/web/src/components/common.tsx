@@ -36,6 +36,7 @@ export function ExpenseRow({
         <input type="checkbox" checked={!!selected} onChange={(ev) => onSelect(ev.target.checked)} aria-label={`Select ${e.merchant ?? e.file.originalFilename}`} />
       )}
       <Link to={`/expenses/${e.id}`} className="row-main">
+        <Thumb expense={e} />
         <div className="row-title">
           <strong>{e.merchant ?? e.file.originalFilename}</strong>
           {e.status !== "ready" && <StatusPill status={e.status} />}
@@ -47,6 +48,15 @@ export function ExpenseRow({
       </Link>
       <div className="row-amount">{formatMoney(e.total, e.currency)}</div>
     </li>
+  );
+}
+
+export function Thumb({ expense }: { expense: Expense }) {
+  const isPdf = expense.file.contentType === "application/pdf";
+  return expense.thumbnailUrl ? (
+    <img className="thumb" src={expense.thumbnailUrl} alt="" loading="lazy" />
+  ) : (
+    <span className={`thumb placeholder ${isPdf ? "pdf" : "img"}`} aria-hidden>{isPdf ? "PDF" : "IMG"}</span>
   );
 }
 

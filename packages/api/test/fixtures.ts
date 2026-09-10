@@ -33,7 +33,7 @@ export function expense(partial: Partial<Expense> = {}): Expense {
     receiptNumber: null,
     lineItems: [],
     notes: null,
-    file: { key: `users/${USER}/01EXP/original.jpg`, contentType: "image/jpeg", size: 1234, originalFilename: "IMG_1.jpg" },
+    file: { key: `users/${USER}/01EXP/original.jpg`, contentType: "image/jpeg", size: 1234, originalFilename: "IMG_1.jpg", thumbnailKey: null },
     extraction: null,
     error: null,
     createdAt: "2024-03-05T10:00:00.000Z",

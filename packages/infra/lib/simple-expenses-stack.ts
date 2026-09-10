@@ -115,6 +115,20 @@ export class SimpleExpensesStack extends Stack {
       featurePlan: cognito.FeaturePlan.ESSENTIALS,
     });
 
+    // First allow-listed email becomes the initial user; Cognito emails a temporary password.
+    const initialEmail = config.allowedEmails.split(",").map((e) => e.trim()).filter(Boolean)[0];
+    if (initialEmail) {
+      new cognito.CfnUserPoolUser(this, "InitialUser", {
+        userPoolId: userPool.userPoolId,
+        username: initialEmail,
+        desiredDeliveryMediums: ["EMAIL"],
+        userAttributes: [
+          { name: "email", value: initialEmail },
+          { name: "email_verified", value: "true" },
+        ],
+      });
+    }
+
     const domain = userPool.addDomain("Domain", {
       cognitoDomain: {
         domainPrefix: config.cognitoDomainPrefix ?? `simple-expenses-${this.account}`,
