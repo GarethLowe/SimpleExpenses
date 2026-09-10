@@ -20,6 +20,7 @@ export const DEFAULT_CATEGORIES = [
 
 export const DEFAULT_SETTINGS = {
   companies: ["Personal"],
+  projects: [] as string[],
   categories: [...DEFAULT_CATEGORIES],
   defaultCurrency: "GBP",
   defaultCompany: "Personal",

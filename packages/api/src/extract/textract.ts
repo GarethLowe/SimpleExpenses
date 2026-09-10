@@ -101,6 +101,7 @@ export function mapTextractDocuments(docs: ExpenseDocument[], categories: readon
     vat_number: text("VENDOR_VAT_NUMBER") ?? text("TAX_PAYER_ID"),
     category: categoriseByKeywords(keywordText, categories),
     company_hint: null,
+    project_hint: null,
     line_items,
     notes: docs.length ? null : "Textract found no expense document",
     confidence,

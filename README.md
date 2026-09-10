@@ -2,8 +2,8 @@
 
 A personal expenses app that runs entirely on AWS serverless services: snap or
 upload receipts (JPEG, PNG, WebP, PDF), have them read automatically, then keep
-everything catalogued by month, year, company and type, with reports and CSV
-export. Installable as a PWA on a phone for capture, and a normal web app on a
+everything catalogued by month, year, company, project and type, with reports
+and CSV export. Installable as a PWA on a phone for capture, and a normal web app on a
 desktop for reviewing and managing many expenses at once.
 
 There is no server to run. Idle cost is close to zero; the only meaningful
@@ -38,12 +38,15 @@ default.
   returns a presigned URL; the browser downsizes photos, PUTs the bytes, and the
   S3 event drives extraction. Records move `scanning` → `needs_review` →
   `ready` (or `failed`, with a Retry button).
-- **Cataloguing.** Date, month and year come from the receipt; company and
-  type come from your lists in Settings, chosen by the model and validated
-  against them, with a keyword fallback. Everything is editable; bulk
-  move/archive/delete/mark-ready work from the Expenses view.
-- **Reports.** Per year: totals by month, by company, by type, and
-  company × month / type × month matrices, plus CSV export.
+- **Cataloguing.** Date, month and year come from the receipt; company,
+  project and type come from your lists in Settings, chosen by the model and
+  validated against them, with a keyword fallback for type. Projects are
+  optional tags (a job, client or trip); a receipt is linked to one when the
+  model spots a matching reference, when you pick one at capture time, or
+  later by hand. Everything is editable; bulk move (company, project, type),
+  archive, delete and mark-ready work from the Expenses view.
+- **Reports.** Per year: totals by month, by company, by project, by type, and
+  company/project/type × month matrices, plus CSV export.
 
 ## Repository layout
 

@@ -14,6 +14,7 @@ function exp(partial: Partial<Expense>): Expense {
     year: date.slice(0, 4),
     merchant: "M",
     company: "Acme",
+    project: null,
     category: "Meals",
     currency: "GBP",
     total: 10,
@@ -37,7 +38,7 @@ describe("buildReport", () => {
     const r = buildReport("2024", [
       exp({ total: 10, tax: 2 }),
       exp({ total: 5.5, tax: 1.1, category: "Travel", date: "2024-04-01" }),
-      exp({ total: 100, company: "Other", date: "2024-04-02" }),
+      exp({ total: 100, company: "Other", project: "Site A", date: "2024-04-02" }),
       exp({ total: 999, archived: true }),
       exp({ total: 999, date: "2023-12-31" }),
       exp({ total: 7, currency: "EUR" }),
@@ -50,6 +51,9 @@ describe("buildReport", () => {
     expect(r.byCompany["Acme"]?.total).toBe(15.5);
     expect(r.byCompany["Other"]?.total).toBe(100);
     expect(r.byCategory["Travel"]?.count).toBe(1);
+    expect(r.byProject["Site A"]?.total).toBe(100);
+    expect(r.byProject["No project"]?.count).toBe(2);
+    expect(r.byProjectAndMonth["Site A"]?.["2024-04"]?.count).toBe(1);
     expect(r.byCompanyAndMonth["Acme"]?.["2024-04"]?.total).toBe(5.5);
     expect(r.otherCurrencies["EUR"]).toEqual({ count: 1, total: 7, tax: 2 });
   });
@@ -65,7 +69,7 @@ describe("expensesToCsv", () => {
   it("quotes fields containing commas and quotes", () => {
     const csv = expensesToCsv([exp({ id: "1", merchant: 'Bob "The" Builder, Ltd', notes: "line\nbreak" })]);
     const lines = csv.split("\r\n");
-    expect(lines[0]).toMatch(/^id,date,merchant/);
+    expect(lines[0]).toMatch(/^id,date,merchant,company,project,category/);
     expect(lines[1]).toContain('"Bob ""The"" Builder, Ltd"');
     expect(csv).toContain('"line\nbreak"');
   });

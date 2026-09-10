@@ -66,6 +66,7 @@ export class ExpensesService {
       year: null,
       merchant: null,
       company: req.company ?? settings.defaultCompany,
+      project: req.project ?? null,
       category: req.category ?? null,
       currency: null,
       total: null,
@@ -158,6 +159,7 @@ export class ExpensesService {
               ? { status: "ready" }
               : {
                   ...(req.action.company !== undefined ? { company: req.action.company } : {}),
+                  ...(req.action.project !== undefined ? { project: req.action.project } : {}),
                   ...(req.action.category !== undefined ? { category: req.action.category } : {}),
                 };
       await this.deps.repo.put(applyEdit(e, edit, this.now()), { mustExist: true });
@@ -180,6 +182,7 @@ export class ExpensesService {
     const cleaned: Settings = {
       ...settings,
       companies: dedupe(settings.companies),
+      projects: dedupe(settings.projects),
       categories: dedupe(settings.categories),
       defaultCurrency: settings.defaultCurrency.toUpperCase(),
       defaultCompany: settings.defaultCompany && settings.companies.includes(settings.defaultCompany) ? settings.defaultCompany : settings.companies[0] ?? null,
@@ -207,7 +210,7 @@ export function applyEdit(existing: Expense, edit: ExpenseEdit, now: Date): Expe
   return next;
 }
 
-const DATA_FIELDS: Array<keyof ExpenseEdit> = ["date", "merchant", "company", "category", "currency", "total", "subtotal", "tax", "paymentMethod", "receiptNumber", "lineItems", "notes"];
+const DATA_FIELDS: Array<keyof ExpenseEdit> = ["date", "merchant", "company", "project", "category", "currency", "total", "subtotal", "tax", "paymentMethod", "receiptNumber", "lineItems", "notes"];
 
 function touchesData(edit: ExpenseEdit): boolean {
   return DATA_FIELDS.some((f) => edit[f] !== undefined);

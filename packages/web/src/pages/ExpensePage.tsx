@@ -8,6 +8,7 @@ type Form = {
   date: string;
   merchant: string;
   company: string;
+  project: string;
   category: string;
   currency: string;
   total: string;
@@ -36,6 +37,7 @@ export function ExpensePage() {
         date: e.date ?? "",
         merchant: e.merchant ?? "",
         company: e.company ?? "",
+        project: e.project ?? "",
         category: e.category ?? "",
         currency: e.currency ?? settings.data?.defaultCurrency ?? "GBP",
         total: e.total?.toString() ?? "",
@@ -65,6 +67,7 @@ export function ExpensePage() {
       date: form.date || null,
       merchant: form.merchant.trim() || null,
       company: form.company || null,
+      project: form.project || null,
       category: form.category || null,
       currency: form.currency.trim().toUpperCase() || null,
       total: num(form.total),
@@ -151,6 +154,18 @@ export function ExpensePage() {
                   <option key={c} value={c}>{c}</option>
                 ))}
                 {form.category && !settings.data?.categories.includes(form.category) && <option value={form.category}>{form.category}</option>}
+              </select>
+            </label>
+          </div>
+          <div className="field-row">
+            <label>
+              Project
+              <select {...field("project")}>
+                <option value="">—</option>
+                {settings.data?.projects.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+                {form.project && !settings.data?.projects.includes(form.project) && <option value={form.project}>{form.project}</option>}
               </select>
             </label>
           </div>

@@ -13,6 +13,7 @@ Rules:
 - "currency" is the ISO 4217 code. Infer it from symbols, the merchant's country or the language when it is not printed.
 - Pick "category" from the user's category list only; choose the closest match, or null if nothing fits.
 - Set "company_hint" only when the document itself makes clear which of the user's companies it belongs to (for example the billing name). Otherwise null.
+- Set "project_hint" only when the document names one of the user's projects (a job reference, site name or PO line). Otherwise null.
 - If the document is not a receipt or invoice, set document_type to "other", leave amounts null and explain in notes.
 - "confidence" is your honest 0-1 estimate that merchant, date and total are all correct.
 - Never invent values. Use null for anything you cannot read.`;
@@ -22,6 +23,7 @@ export function userPrompt(settings: Settings): string {
     "Extract this receipt.",
     `User's categories: ${settings.categories.join("; ")}.`,
     `User's companies: ${settings.companies.join("; ")}.`,
+    `User's projects: ${settings.projects.length ? settings.projects.join("; ") : "(none)"}.`,
     `Default currency if none can be determined: ${settings.defaultCurrency}.`,
   ].join("\n");
 }

@@ -86,8 +86,8 @@ Robustness measures in the implementation:
 - The prompt forbids guessing and asks for nulls and a 0-1 confidence; records
   below 0.8 confidence or missing date/total/merchant are not "one-tap
   acceptable" in the inbox.
-- Category and company suggestions are matched against the user's lists; a
-  keyword categoriser fills gaps.
+- Category, company and project suggestions are matched against the user's
+  lists; a keyword categoriser fills gaps in category.
 - Dates are normalised (day-first default), currencies validated as ISO codes.
 - Retryable failures (rate limits, 5xx) go back to SQS and then a dead-letter
   queue; everything else is recorded on the expense with a Retry button.

@@ -101,6 +101,11 @@ export class ExpensesRepo {
       values[":company"] = q.company;
       filters.push("#company = :company");
     }
+    if (q.project !== undefined) {
+      names["#project"] = "project";
+      values[":project"] = q.project;
+      filters.push("#project = :project");
+    }
     if (q.category !== undefined) {
       names["#category"] = "category";
       values[":category"] = q.category;

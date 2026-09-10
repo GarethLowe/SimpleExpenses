@@ -6,6 +6,7 @@ export const USER = "user-123";
 
 export const settings: Settings = {
   companies: ["Acme Ltd", "Personal"],
+  projects: ["Site A", "Website rebuild"],
   categories: ["Meals", "Travel", "Software & Subscriptions", "Other"],
   defaultCurrency: "GBP",
   defaultCompany: "Personal",
@@ -22,6 +23,7 @@ export function expense(partial: Partial<Expense> = {}): Expense {
     year: "2024",
     merchant: "Costa",
     company: "Personal",
+    project: null,
     category: "Meals",
     currency: "GBP",
     total: 3.5,

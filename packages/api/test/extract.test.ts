@@ -21,6 +21,7 @@ function raw(partial: Partial<ReceiptExtraction> = {}): ReceiptExtraction {
     vat_number: null,
     category: "meals",
     company_hint: "acme ltd",
+    project_hint: "site a",
     line_items: [{ description: "Latte", quantity: 1, unit_price: 3.3, total: 3.3 }],
     notes: null,
     confidence: 0.95,
@@ -49,6 +50,7 @@ describe("applyExtraction", () => {
       tax: 1.31,
       category: "Meals",
       company: "Acme Ltd",
+      project: "Site A",
       paymentMethod: "Visa",
       receiptNumber: "R-1",
       updatedAt: "2024-03-06T00:00:00.000Z",
@@ -58,9 +60,15 @@ describe("applyExtraction", () => {
   });
 
   it("keeps values the user already set", () => {
-    const e = applyExtraction({ ...base, company: "Personal", category: "Travel" }, meta(raw()), settings);
+    const e = applyExtraction({ ...base, company: "Personal", project: "Website rebuild", category: "Travel" }, meta(raw()), settings);
     expect(e.company).toBe("Personal");
+    expect(e.project).toBe("Website rebuild");
     expect(e.category).toBe("Travel");
+  });
+
+  it("leaves project null when the hint matches nothing", () => {
+    const e = applyExtraction(base, meta(raw({ project_hint: "Unknown job" })), settings);
+    expect(e.project).toBeNull();
   });
 
   it("falls back to keyword categorisation and the default company", () => {

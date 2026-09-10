@@ -15,6 +15,7 @@ export function ExpensesPage() {
   const year = params.get("year") ?? currentYear();
   const monthNum = params.get("month") ?? "";
   const company = params.get("company") ?? "";
+  const project = params.get("project") ?? "";
   const category = params.get("category") ?? "";
   const status = (params.get("status") ?? "") as ExpenseStatus | "";
   const archived = (params.get("archived") ?? "false") as "true" | "false" | "all";
@@ -24,12 +25,13 @@ export function ExpensesPage() {
     () => ({
       ...(allYears ? {} : monthNum ? { month: `${year}-${monthNum}` } : { year }),
       ...(company ? { company } : {}),
+      ...(project ? { project } : {}),
       ...(category ? { category } : {}),
       ...(status ? { status } : {}),
       archived,
       limit: 100,
     }),
-    [allYears, year, monthNum, company, category, status, archived],
+    [allYears, year, monthNum, company, project, category, status, archived],
   );
   const first = useExpenses(filters);
   const extra = useExpenses({ ...filters, cursor: pages[pages.length - 1] });
@@ -96,6 +98,17 @@ export function ExpensesPage() {
             ))}
           </select>
         </label>
+        {settings.data && settings.data.projects.length > 0 && (
+          <label>
+            Project
+            <select value={project} onChange={(e) => set("project", e.target.value)}>
+              <option value="">All</option>
+              {settings.data.projects.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
           Type
           <select value={category} onChange={(e) => set("category", e.target.value)}>
@@ -174,6 +187,15 @@ export function ExpensesPage() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
+          {settings.data && settings.data.projects.length > 0 && (
+            <select defaultValue="" onChange={(e) => { if (e.target.value) run({ type: "move", project: e.target.value === "__none__" ? null : e.target.value }); e.target.value = ""; }}>
+              <option value="">Move to project…</option>
+              {settings.data.projects.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+              <option value="__none__">No project</option>
+            </select>
+          )}
           <select defaultValue="" onChange={(e) => { if (e.target.value) run({ type: "move", category: e.target.value }); e.target.value = ""; }}>
             <option value="">Set type…</option>
             {settings.data?.categories.map((c) => (

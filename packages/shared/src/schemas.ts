@@ -51,6 +51,10 @@ export const ReceiptExtractionSchema = z.object({
     .string()
     .nullable()
     .describe("One of the user's companies if the receipt clearly belongs to it"),
+  project_hint: z
+    .string()
+    .nullable()
+    .describe("One of the user's projects if the receipt clearly relates to it (e.g. a job reference)"),
   line_items: z.array(LineItemSchema),
   notes: z.string().nullable().describe("Anything notable, e.g. unreadable areas"),
   confidence: z.number().describe("0-1 overall confidence in the extraction"),
@@ -85,6 +89,7 @@ export const ExpenseSchema = z.object({
   year: z.string().nullable(),
   merchant: z.string().nullable(),
   company: z.string().nullable(),
+  project: z.string().nullable().default(null),
   category: z.string().nullable(),
   currency: z.string().nullable(),
   total: z.number().nullable(),
@@ -108,6 +113,7 @@ export const ExpenseEditableSchema = z
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
     merchant: z.string().max(200).nullable(),
     company: z.string().max(100).nullable(),
+    project: z.string().max(100).nullable(),
     category: z.string().max(100).nullable(),
     currency: z.string().length(3).nullable(),
     total: z.number().nullable(),
@@ -128,6 +134,7 @@ export const CreateExpenseRequestSchema = z.object({
   contentType: z.enum(ALLOWED_CONTENT_TYPES),
   size: z.number().int().positive().max(MAX_UPLOAD_BYTES),
   company: z.string().max(100).nullable().optional(),
+  project: z.string().max(100).nullable().optional(),
   category: z.string().max(100).nullable().optional(),
 });
 export type CreateExpenseRequest = z.infer<typeof CreateExpenseRequestSchema>;
@@ -149,6 +156,7 @@ export const BulkActionSchema = z.object({
     z.object({
       type: z.literal("move"),
       company: z.string().max(100).nullable().optional(),
+      project: z.string().max(100).nullable().optional(),
       category: z.string().max(100).nullable().optional(),
     }),
   ]),
@@ -161,6 +169,7 @@ export const ListExpensesQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   company: z.string().optional(),
+  project: z.string().optional(),
   category: z.string().optional(),
   status: ExpenseStatus.optional(),
   archived: z.enum(["true", "false", "all"]).default("false"),
@@ -177,6 +186,7 @@ export type ListExpensesResponse = z.infer<typeof ListExpensesResponseSchema>;
 
 export const SettingsSchema = z.object({
   companies: z.array(z.string().min(1).max(100)).max(50),
+  projects: z.array(z.string().min(1).max(100)).max(200).default([]),
   categories: z.array(z.string().min(1).max(100)).max(100),
   defaultCurrency: z.string().length(3),
   defaultCompany: z.string().max(100).nullable(),
@@ -196,8 +206,10 @@ export const ReportSchema = z.object({
   overall: ReportTotalsSchema,
   byMonth: z.record(z.string(), ReportTotalsSchema),
   byCompany: z.record(z.string(), ReportTotalsSchema),
+  byProject: z.record(z.string(), ReportTotalsSchema),
   byCategory: z.record(z.string(), ReportTotalsSchema),
   byCompanyAndMonth: z.record(z.string(), z.record(z.string(), ReportTotalsSchema)),
+  byProjectAndMonth: z.record(z.string(), z.record(z.string(), ReportTotalsSchema)),
   byCategoryAndMonth: z.record(z.string(), z.record(z.string(), ReportTotalsSchema)),
   otherCurrencies: z.record(z.string(), ReportTotalsSchema),
 });

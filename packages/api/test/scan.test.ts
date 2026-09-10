@@ -38,7 +38,7 @@ const okExtractor: ReceiptExtractor = {
     raw: {
       document_type: "receipt", merchant: "Costa", merchant_address: null, date: "2024-03-05", currency: "GBP", total: 3.5,
       subtotal: null, tax: null, tip: null, payment_method: null, card_last4: null, receipt_number: null, vat_number: null,
-      category: "Meals", company_hint: null, line_items: [], notes: null, confidence: 0.9,
+      category: "Meals", company_hint: null, project_hint: null, line_items: [], notes: null, confidence: 0.9,
     },
   }),
 };

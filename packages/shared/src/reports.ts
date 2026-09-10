@@ -44,8 +44,10 @@ export function buildReport(year: string, expenses: Expense[], currency?: string
     overall: empty(),
     byMonth: {},
     byCompany: {},
+    byProject: {},
     byCategory: {},
     byCompanyAndMonth: {},
+    byProjectAndMonth: {},
     byCategoryAndMonth: {},
     otherCurrencies: {},
   };
@@ -58,12 +60,15 @@ export function buildReport(year: string, expenses: Expense[], currency?: string
     }
     const month = e.month ?? `${year}-00`;
     const company = e.company ?? "Unassigned";
+    const project = e.project ?? "No project";
     const category = e.category ?? "Uncategorised";
     add(report.overall, e);
     bump(report.byMonth, month, e);
     bump(report.byCompany, company, e);
+    bump(report.byProject, project, e);
     bump(report.byCategory, category, e);
     bump2(report.byCompanyAndMonth, company, month, e);
+    bump2(report.byProjectAndMonth, project, month, e);
     bump2(report.byCategoryAndMonth, category, month, e);
   }
   return report;
@@ -72,11 +77,11 @@ export function buildReport(year: string, expenses: Expense[], currency?: string
 /** CSV export of expenses (RFC 4180 quoting). */
 export function expensesToCsv(expenses: Expense[]): string {
   const header = [
-    "id", "date", "merchant", "company", "category", "currency", "total", "tax", "subtotal",
+    "id", "date", "merchant", "company", "project", "category", "currency", "total", "tax", "subtotal",
     "paymentMethod", "receiptNumber", "status", "archived", "notes", "filename",
   ];
   const rows = expenses.map((e) => [
-    e.id, e.date ?? "", e.merchant ?? "", e.company ?? "", e.category ?? "", e.currency ?? "",
+    e.id, e.date ?? "", e.merchant ?? "", e.company ?? "", e.project ?? "", e.category ?? "", e.currency ?? "",
     e.total ?? "", e.tax ?? "", e.subtotal ?? "", e.paymentMethod ?? "", e.receiptNumber ?? "",
     e.status, e.archived ? "yes" : "no", e.notes ?? "", e.file.originalFilename,
   ]);

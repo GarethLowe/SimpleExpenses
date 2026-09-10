@@ -42,7 +42,7 @@ export function ExpenseRow({
           {e.archived && <span className="pill">Archived</span>}
         </div>
         <div className="row-sub muted">
-          {shortDate(e.date)} · {e.company ?? "No company"} · {e.category ?? "Uncategorised"}
+          {shortDate(e.date)} · {e.company ?? "No company"}{e.project ? ` · ${e.project}` : ""} · {e.category ?? "Uncategorised"}
         </div>
       </Link>
       <div className="row-amount">{formatMoney(e.total, e.currency)}</div>

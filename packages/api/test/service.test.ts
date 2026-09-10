@@ -79,7 +79,7 @@ describe("POST /expenses", () => {
 describe("GET /expenses", () => {
   it("queries GSI1 by month with filters and strips key attributes", async () => {
     ddb.on(QueryCommand).resolves({ Items: [stored(expense())] });
-    const res = await route(makeService(), event("GET /expenses", { query: { month: "2024-03", company: "Personal" } }));
+    const res = await route(makeService(), event("GET /expenses", { query: { month: "2024-03", company: "Personal", project: "Site A" } }));
     expect(res).toMatchObject({ statusCode: 200 });
     const body = JSON.parse((res as { body: string }).body);
     expect(body.items).toHaveLength(1);
@@ -88,8 +88,8 @@ describe("GET /expenses", () => {
     const input = ddb.commandCalls(QueryCommand)[0]!.args[0].input;
     expect(input.IndexName).toBe("GSI1");
     expect(input.KeyConditionExpression).toContain("begins_with(#sk, :prefix)");
-    expect(input.ExpressionAttributeValues).toMatchObject({ ":pk": `USER#${USER}`, ":prefix": "2024-03", ":company": "Personal", ":archived": false });
-    expect(input.FilterExpression).toBe("#archived = :archived AND #company = :company");
+    expect(input.ExpressionAttributeValues).toMatchObject({ ":pk": `USER#${USER}`, ":prefix": "2024-03", ":company": "Personal", ":project": "Site A", ":archived": false });
+    expect(input.FilterExpression).toBe("#archived = :archived AND #company = :company AND #project = :project");
   });
 
   it("returns a cursor when the page is full", async () => {
@@ -181,9 +181,9 @@ describe("POST /expenses/bulk", () => {
     ddb.on(GetCommand, { Key: { PK: `USER#${USER}`, SK: "EXP#A" } }).resolves({ Item: stored(expense({ id: "A" })) });
     ddb.on(GetCommand, { Key: { PK: `USER#${USER}`, SK: "EXP#B" } }).resolves({});
     ddb.on(PutCommand).resolves({});
-    const res = await route(makeService(), event("POST /expenses/bulk", { body: { ids: ["A", "B"], action: { type: "move", company: "Acme Ltd" } } }));
+    const res = await route(makeService(), event("POST /expenses/bulk", { body: { ids: ["A", "B"], action: { type: "move", company: "Acme Ltd", project: "Site A" } } }));
     expect(JSON.parse((res as { body: string }).body)).toEqual({ updated: 1, deleted: 0, missing: ["B"] });
-    expect(ddb.commandCalls(PutCommand)[0]!.args[0].input.Item).toMatchObject({ id: "A", company: "Acme Ltd", category: "Meals" });
+    expect(ddb.commandCalls(PutCommand)[0]!.args[0].input.Item).toMatchObject({ id: "A", company: "Acme Ltd", project: "Site A", category: "Meals" });
   });
 
   it("deletes in bulk", async () => {
@@ -211,12 +211,12 @@ describe("settings", () => {
     ddb.reset();
     ddb.on(GetCommand).resolves({});
     const res = await route(makeService(), event("GET /settings"));
-    expect(JSON.parse((res as { body: string }).body)).toMatchObject({ companies: ["Personal"], defaultCurrency: "GBP" });
+    expect(JSON.parse((res as { body: string }).body)).toMatchObject({ companies: ["Personal"], projects: [], defaultCurrency: "GBP" });
   });
 
   it("dedupes and fixes the default company on save", async () => {
     ddb.on(PutCommand).resolves({});
-    const res = await route(makeService(), event("PUT /settings", { body: { companies: ["Acme", "acme ", "Beta"], categories: ["Meals"], defaultCurrency: "gbp", defaultCompany: "Nope" } }));
-    expect(JSON.parse((res as { body: string }).body)).toEqual({ companies: ["Acme", "Beta"], categories: ["Meals"], defaultCurrency: "GBP", defaultCompany: "Acme" });
+    const res = await route(makeService(), event("PUT /settings", { body: { companies: ["Acme", "acme ", "Beta"], projects: ["P1", " p1"], categories: ["Meals"], defaultCurrency: "gbp", defaultCompany: "Nope" } }));
+    expect(JSON.parse((res as { body: string }).body)).toEqual({ companies: ["Acme", "Beta"], projects: ["P1"], categories: ["Meals"], defaultCurrency: "GBP", defaultCompany: "Acme" });
   });
 });

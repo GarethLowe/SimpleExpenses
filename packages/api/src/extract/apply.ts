@@ -29,6 +29,7 @@ export function applyExtraction(expense: Expense, meta: ExtractionMeta, settings
     categoriseByKeywords([merchant, ...r.line_items.map((l) => l.description)].join(" "), settings.categories);
 
   const company = expense.company ?? matchToList(r.company_hint, settings.companies) ?? settings.defaultCompany ?? null;
+  const project = expense.project ?? matchToList(r.project_hint, settings.projects);
 
   const currency = (r.currency?.toUpperCase().match(/^[A-Z]{3}$/) ? r.currency.toUpperCase() : null) ?? settings.defaultCurrency;
 
@@ -48,6 +49,7 @@ export function applyExtraction(expense: Expense, meta: ExtractionMeta, settings
     year: yearOf(date),
     merchant,
     company,
+    project,
     category,
     currency,
     total,

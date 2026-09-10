@@ -25,6 +25,7 @@ export function SettingsPage() {
         }}
       >
         <ListEditor label="Companies" hint="Who each expense belongs to (your business, personal, a client)." values={form.companies} onChange={(companies) => setForm({ ...form, companies })} />
+        <ListEditor label="Projects" hint="Optional. Jobs, clients or trips to tag expenses with; the scanner will use them if a receipt mentions one." values={form.projects} onChange={(projects) => setForm({ ...form, projects })} />
         <ListEditor label="Types" hint="Categories the scanner picks from. Keep them distinct and few." values={form.categories} onChange={(categories) => setForm({ ...form, categories })} />
         <div className="field-row">
           <label>

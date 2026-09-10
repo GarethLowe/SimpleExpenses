@@ -79,6 +79,7 @@ function toBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
 
 export interface UploadOptions {
   company?: string | null;
+  project?: string | null;
   category?: string | null;
   onProgress?: (fraction: number) => void;
 }
@@ -91,6 +92,7 @@ export async function uploadReceipt(api: ApiClient, file: File, opts: UploadOpti
     contentType: prepared.contentType,
     size: prepared.blob.size,
     company: opts.company ?? null,
+    project: opts.project ?? null,
     category: opts.category ?? null,
   });
   await putWithProgress(created.uploadUrl, created.uploadHeaders, prepared.blob, opts.onProgress);

@@ -19,6 +19,7 @@ export function CapturePage() {
   const qc = useQueryClient();
   const settings = useSettings();
   const [company, setCompany] = useState<string>("");
+  const [project, setProject] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -40,6 +41,7 @@ export function CapturePage() {
       try {
         const expense = await uploadReceipt(api, file, {
           company: company || null,
+          project: project || null,
           category: category || null,
           onProgress: (p) => update(job.id, { progress: p }),
         });
@@ -62,6 +64,15 @@ export function CapturePage() {
               <option value="">Default ({settings.data?.defaultCompany ?? "none"})</option>
               {settings.data?.companies.map((c) => (
                 <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Project
+            <select value={project} onChange={(e) => setProject(e.target.value)}>
+              <option value="">{settings.data?.projects.length ? "Detect automatically" : "None"}</option>
+              {settings.data?.projects.map((p) => (
+                <option key={p} value={p}>{p}</option>
               ))}
             </select>
           </label>

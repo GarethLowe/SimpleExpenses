@@ -51,9 +51,11 @@ export function ReportsPage() {
 
           <Breakdown title="By month" rows={months.map((m) => [MONTHS[Number(m.slice(5)) - 1] ?? m, r.byMonth[m]])} currency={r.currency} />
           <Breakdown title="By company" rows={sortRows(r.byCompany)} currency={r.currency} />
+          {Object.keys(r.byProject).some((k) => k !== "No project") && <Breakdown title="By project" rows={sortRows(r.byProject)} currency={r.currency} />}
           <Breakdown title="By type" rows={sortRows(r.byCategory)} currency={r.currency} />
 
           <Matrix title="Company by month" data={r.byCompanyAndMonth} months={months} currency={r.currency} />
+          {Object.keys(r.byProject).some((k) => k !== "No project") && <Matrix title="Project by month" data={r.byProjectAndMonth} months={months} currency={r.currency} />}
           <Matrix title="Type by month" data={r.byCategoryAndMonth} months={months} currency={r.currency} />
         </>
       )}

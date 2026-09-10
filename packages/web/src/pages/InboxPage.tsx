@@ -59,7 +59,7 @@ export function InboxPage() {
                     <span className={`pill conf-${conf >= 0.8 ? "high" : conf >= 0.5 ? "mid" : "low"}`}>{Math.round(conf * 100)}%</span>
                   </div>
                   <div className="row-sub muted">
-                    {shortDate(e.date)} · {e.company ?? "No company"} · {e.category ?? "Uncategorised"}
+                    {shortDate(e.date)} · {e.company ?? "No company"}{e.project ? ` · ${e.project}` : ""} · {e.category ?? "Uncategorised"}
                   </div>
                 </Link>
                 <div className="row-amount">{formatMoney(e.total, e.currency)}</div>
