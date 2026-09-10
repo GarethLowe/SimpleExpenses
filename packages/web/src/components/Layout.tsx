@@ -1,7 +1,7 @@
 import { useAuth } from "react-oidc-context";
 import { NavLink, Outlet } from "react-router-dom";
 import { signOut, useConfig } from "../auth";
-import { useInbox } from "../hooks";
+import { useInboxCount } from "../hooks";
 
 const NAV = [
   { to: "/inbox", label: "Inbox", icon: "📥" },
@@ -14,8 +14,7 @@ const NAV = [
 export function Layout() {
   const auth = useAuth();
   const config = useConfig();
-  const inbox = useInbox();
-  const pending = inbox.items.filter((e) => e.status === "needs_review" || e.status === "failed").length;
+  const pending = useInboxCount();
   const email = (auth.user?.profile["email"] as string | undefined) ?? "";
 
   return (

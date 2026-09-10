@@ -12,7 +12,15 @@ registerSW({ immediate: true });
 
 const root = createRoot(document.getElementById("root")!);
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 15_000, refetchOnWindowFocus: true } },
+  defaultOptions: {
+    queries: {
+      // One retry with a delay covers a cold-start blip without hammering the API on real errors.
+      retry: 1,
+      retryDelay: 2000,
+      staleTime: 15_000,
+      refetchOnWindowFocus: true,
+    },
+  },
 });
 
 loadConfig()

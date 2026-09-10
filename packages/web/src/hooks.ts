@@ -35,15 +35,22 @@ export function useExpenses(filters: ListFilters) {
   });
 }
 
-/** Inbox: everything that isn't settled, across several statuses. */
+const INBOX_STATUSES: ExpenseStatus[] = ["needs_review", "failed", "scanning", "uploading"];
+const inboxFilters = (status: ExpenseStatus): ListFilters => ({ status, archived: "false", limit: 200 });
+
+/**
+ * Inbox: everything that isn't settled, across several statuses. The
+ * in-progress statuses poll, but only while they have items and only while
+ * the last fetch succeeded, so an idle inbox costs one request per status.
+ */
 export function useInbox() {
   const api = useApi();
-  const statuses: ExpenseStatus[] = ["needs_review", "failed", "scanning", "uploading"];
   const results = useQueries({
-    queries: statuses.map((status) => ({
-      queryKey: keys.expenses({ status, archived: "false", limit: 200 }),
-      queryFn: () => api.listExpenses({ status, archived: "false", limit: 200 }),
-      refetchInterval: ACTIVE.includes(status) ? 3000 : false,
+    queries: INBOX_STATUSES.map((status) => ({
+      queryKey: keys.expenses(inboxFilters(status)),
+      queryFn: () => api.listExpenses(inboxFilters(status)),
+      refetchInterval: (q: { state: { status: string; data?: { items: unknown[] } } }) =>
+        ACTIVE.includes(status) && q.state.status === "success" && (q.state.data?.items.length ?? 0) > 0 ? 4000 : false,
     })),
   });
   const items = results.flatMap((r) => r.data?.items ?? []);
@@ -53,6 +60,21 @@ export function useInbox() {
     error: results.find((r) => r.error)?.error ?? null,
     refetch: () => Promise.all(results.map((r) => r.refetch())),
   };
+}
+
+/** Badge count for the nav: review/failed only, no polling, tolerant of errors. */
+export function useInboxCount(): number {
+  const api = useApi();
+  const statuses: ExpenseStatus[] = ["needs_review", "failed"];
+  const results = useQueries({
+    queries: statuses.map((status) => ({
+      queryKey: keys.expenses(inboxFilters(status)),
+      queryFn: () => api.listExpenses(inboxFilters(status)),
+      staleTime: 60_000,
+      retry: false,
+    })),
+  });
+  return results.reduce((n, r) => n + (r.data?.items.length ?? 0), 0);
 }
 
 export function useExpense(id: string | undefined) {
